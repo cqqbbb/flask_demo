@@ -1,4 +1,5 @@
 import pymysql
+from flask import current_app
 from flask_sqlalchemy import SQLAlchemy
 from datetime import datetime
 
@@ -10,8 +11,8 @@ db = SQLAlchemy()
 
 
 class BaseModel(object):
-    create_time = db.Column(db.DateTime, default=datetime.now())
-    update_time = db.Column(db.DateTime, default=datetime.now())
+    create_time = db.Column(db.DateTime, default=datetime.now)
+    update_time = db.Column(db.DateTime, default=datetime.now)
     isDelete = db.Column(db.Boolean, default=False)
 
 
@@ -42,6 +43,10 @@ class NewsInfo(db.Model, BaseModel):
     reason = db.Column(db.String(100), default='')
     comments = db.relationship('NewsComment', backref='news', lazy='dynamic', order_by='NewsComment.id.desc()')
 
+    @property
+    def pic_url(self):
+        return current_app.config.get('QINIU_URL') + self.pic
+
 
 class NewsCategory(db.Model, BaseModel):
     __tablename__ = 'news_category'
@@ -55,7 +60,7 @@ class UserInfo(db.Model, BaseModel):
     id = db.Column(db.Integer, primary_key=True)
     avatar = db.Column(db.String(50), default='user_pic.png')
     nick_name = db.Column(db.String(20))
-    signature = db.Column(db.String(200))
+    signature = db.Column(db.String(200), default='这家伙很懒什么都没写')
     public_count = db.Column(db.Integer, default=0)
     follow_count = db.Column(db.Integer, default=0)
     mobile = db.Column(db.String(11))
@@ -64,7 +69,7 @@ class UserInfo(db.Model, BaseModel):
     isAdmin = db.Column(db.Boolean, default=False)
     news = db.relationship('NewsInfo', backref='user', lazy='dynamic')
     comments = db.relationship('NewsComment', backref='user')
-    news_collect = db.relationship('NewInfo', secondary=tb_news_collect, lazy='dynamic')
+    news_collect = db.relationship('NewsInfo', secondary=tb_news_collect, lazy='dynamic')
     follow_user = db.relationship(
         'UserInfo',
         secondary=tb_user_follow,
@@ -84,6 +89,11 @@ class UserInfo(db.Model, BaseModel):
 
     def check_pwd(self, pwd):
         return check_password_hash(self.password_hash, pwd)
+
+    @property
+    def avatar_url(self):
+        # return "/static/news/images/" + self.avatar
+        return current_app.config.get('QINIU_URL') + self.avatar
 
 
 class NewsComment(db.Model, BaseModel):
