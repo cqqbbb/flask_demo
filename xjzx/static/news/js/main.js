@@ -255,6 +255,7 @@ function sendSMSCode() {
     },function (data) {
         if(data.result==1){
             alert('图片验证码错误');
+
         }else if(data.result==2){
             alert('请查看短信');
         }

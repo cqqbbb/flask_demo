@@ -20,7 +20,9 @@ class Config(object):
     QINIU_SK = 'uOZfRdFtljIw7b8jr6iTG-cC6wY_-N19466PXUAb'
     QINIU_BUCKET = 'itcast20171104'
     QINIU_URL = 'http://oyvzbpqij.bkt.clouddn.com/'
+
+
 class DevelopConfig(Config):
     SQLALCHEMY_DATABASE_URI = 'mysql://root:mysql@localhost:3306/xjzx10'
     DEBUG = True
-    PORT=5004
+    PORT = 5004
