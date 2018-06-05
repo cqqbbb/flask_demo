@@ -1,4 +1,5 @@
-from flask import Flask
+import redis
+from flask import Flask,render_template
 from views_admin import admin_bp
 from views_news import news_bp
 from views_user import user_bp
@@ -24,4 +25,13 @@ def create_app(config):
     app.logger_xjzx = logging
     CSRFProtect(app)
     Session(app)
+    host = app.config.get('REDIS_HOST')
+    port = app.config.get('REDIS_PORT')
+    redis_db = app.config.get('REDIS_DB')
+    app.redis_client = redis.StrictRedis(host=host, port=port, db=redis_db)
+
+    @app.errorhandler(404)
+    def handle404(e):
+        return render_template('news/404.html')
+
     return app

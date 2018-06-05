@@ -68,6 +68,20 @@ def register():
     return jsonify(result=6)
 
 
+def login_time_count():
+    now = datetime.now()
+    redis_client = current_app.redis_client
+    login_key = 'login%d_%d_%d' % (now.year, now.month, now.day)
+    time_list = ["08:15", "09:15", "10:15", "11:15", "12:15", "13:15", "14:15", "15:15", "16:15", "17:15", "18:15",
+                 "19:15"]
+    for index, time in enumerate(time_list):
+        if now.hour < index + 8 or (now.hour == index + 8 and now.minute <= 15):
+            redis_client.hincrby(login_key, time, 1)
+            break
+    else:
+        redis_client.hincrby(login_key, '19:15', 1)
+
+
 @user_bp.route('/login', methods=['POST'])
 def login():
     dict1 = request.form
@@ -78,9 +92,9 @@ def login():
     user = UserInfo.query.filter_by(mobile=mobile).first()
     if user:
         if user.check_pwd(pwd):
+            # 将当前时段的登陆数量加一,供后台admin图表展示
+            login_time_count()
             session['user_id'] = user.id
-            print(session['user_id'])
-            print(session)
             return jsonify(result=4, avatar=user.avatar_url, nick_name=user.nick_name)
         else:
             return jsonify(result=3)
@@ -91,7 +105,6 @@ def login():
 @user_bp.route('/logout', methods=['POST'])
 def logout():
     del session['user_id']
-    print("========%s" % session)
     return jsonify(result=1)
 
 
@@ -109,7 +122,6 @@ def login_required(view_fun):
 @login_required
 def index():
     user_id = session['user_id']
-    print(user_id)
     user = UserInfo.query.get(user_id)
     return render_template('news/user.html', user=user)
 
@@ -259,7 +271,7 @@ def newsList():
                            page=page)
 
 
-@user_bp.route('/release_update/<int:news_id>', methods=['GET','POST'])
+@user_bp.route('/release_update/<int:news_id>', methods=['GET', 'POST'])
 @login_required
 def release_update(news_id):
     news = NewsInfo.query.get(news_id)
@@ -297,3 +309,17 @@ def release_update(news_id):
         db.session.commit()
 
         return redirect('/user/newsList')
+
+
+@user_bp.route('/<int:user_id>')
+def user(user_id):
+    user = UserInfo.query.get(user_id)
+    page = int(request.args.get('page', 1))
+    pagination = user.news.order_by(NewsInfo.update_time.desc()).paginate(page, 6, False)
+    news_list = pagination.items
+    total_page = pagination.pages
+    return render_template('news/other.html',
+                           user=user,
+                           news_list=news_list,
+                           total_page=total_page,
+                           page=page)

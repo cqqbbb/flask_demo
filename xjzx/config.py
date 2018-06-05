@@ -8,6 +8,7 @@ class Config(object):
     SQLALCHEMY_TRACK_MODIFICATIONS = True
     REDIS_HOST = "localhost"
     REDIS_PORT = 6379
+    # REDIS_DB = 10
     SECRET_KEY = "itheima"
     SESSION_TYPE = "redis"
     SESSION_USE_SIGNER = True
@@ -25,4 +26,3 @@ class Config(object):
 class DevelopConfig(Config):
     SQLALCHEMY_DATABASE_URI = 'mysql://root:mysql@localhost:3306/xjzx10'
     DEBUG = True
-    PORT = 5004
